@@ -2,6 +2,7 @@ import os
 import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
+from pyrogram.errors import FloodWait # Imported FloodWait error to handle limits
 from Zaid import SUDO_USER
 
 OW_FILE = "oneword.txt"
@@ -42,10 +43,14 @@ async def oneword_spam(xspam: Client, e: Message):
             break
             
         try:
-            # Removed mention, now it only sends the word replying to the target message ID
+            # Sends the word replying to the target message ID
             await xspam.send_message(chat_id, word, reply_to_message_id=reply_to_msg_id)
-            await asyncio.sleep(0.01) # Reduced delay for maximum speed
+            await asyncio.sleep(0.05) # 0.05s is the optimal sweet spot for high speed with lower risk
+        except FloodWait as flood:
+            # If Telegram gives FloodWait, wait for the required seconds and then continue
+            await asyncio.sleep(flood.value + 1)
         except Exception:
+            # Break on other critical errors (like getting banned/muted from chat)
             break
 
     # Cleanup the task after completion or error
